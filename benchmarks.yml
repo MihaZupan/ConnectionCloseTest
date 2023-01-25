@@ -1,0 +1,32 @@
+imports:
+  - https://raw.githubusercontent.com/dotnet/crank/main/src/Microsoft.Crank.Jobs.Wrk/wrk.yml
+  - https://github.com/aspnet/Benchmarks/blob/main/scenarios/aspnet.profiles.yml?raw=true
+
+variables:
+  serverPort: 5000
+
+jobs:
+  socketserver:
+    source:
+      localFolder: .
+      project: ConnectionClose.csproj
+    readyStateText: Application started.
+    variables:
+      scenario: plaintext
+      concurrentSockets: 1
+      asyncAccept: 1
+    arguments: "{{serverPort}} {{concurrentSockets}} {{asyncAccept}}"
+    environmentVariables:
+      DOTNET_gcServer: 1
+
+scenarios:
+  connectionclose:
+    application:
+      job: socketserver
+    load:
+      job: wrk
+      variables:
+        path: /plaintext
+        pipeline: 0
+        presetHeaders: connectionclose
+        connections: 32
